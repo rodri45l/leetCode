@@ -1,41 +1,91 @@
 #include <string>
 #include <vector>
-#include <iostrem>
+#include <iostream>
 
 class Solution {
 public:
-    vector<string> fullJustify(vector<string>& words, int maxWidth) {
-        int total_len = 0;
-        for (const std::string &word : words) {
-            total_len += word.length();
+    std::string joinLine(const std::vector<std::string>& line) {
+        std::string result;
+        size_t totalLength = 0;
+        for (const auto& word : line) totalLength += word.size() + 1; // Word length + space.
+        result.reserve(totalLength);
+        for (const std::string& word : line) {
+            result += word;
+            result += " ";
         }
-        int rows = (total_len + maxWidth - 1)/ maxWidth;
-        std::vector<std::vector<std::string>> lines(rows, std::vector<std::string>(1, ""));
-        int occLen = 0;
-        int currRow = 0;
-        for (size_t i = 0; i > (words.length() - 1);i++) {
-            if (occLen + words[i].length() < maxWidth) {
-                if (occ_len == 0) {
-                    lines[currRow][0] = words[i]
-                    occLen += words[i].length()
-                    // we add a space if it is last line
-                    if (i == words.length() - 1 ) {
-                        lines[currRow].push_back(" ");
-                    }
-                }
-                else {
-                    lines[currRow].push_back(" ");
-                    lines[currRow].push_back(words[i]);
-                    occLen += words[i].length()
-                }
-                // now we check if next word will fit on the line, otherwise we asjust the spaces, increase the row and reset the len
-                if ((i+1 <= words.length()-1) && (occLen + words[i+1].length() > maxWidth) || (i == words.length() - 1 )) {
-                    
-                }
+
+        // Remove the trailing space (if necessary)
+        if (!result.empty()) {
+            result.pop_back();
+        }
+
+        return result;
+    }
+    std::vector<std::string> getWords(int i, std::vector<std::string>& words, int maxWidth) {
+        std::vector<std::string> currentLine;
+        int currLength = 0;
+        while (i < words.size() && currLength + words[i].length() <= maxWidth) {
+            currentLine.push_back(words[i]);
+            currLength += words[i].length() + 1;
+            i++;
+        }
+        return std::move(currentLine);
+    }
+    std::string createLine(std::vector<std::string>& line, int maxWidth, bool lastLine) {
+        int currentLen = line.size() - 1;
+        for (const std::string &word : line) {
+            currentLen += word.length();
+        }
+        // case 1 regular line
+        int spaceToFill = maxWidth - currentLen;
+        int regularSpaces;
+        int extraSpaces;
+        if(line.size() == 1) {
+            regularSpaces = 0;
+        }
+        else {
+            regularSpaces = spaceToFill /(line.size() - 1);
+            extraSpaces = spaceToFill%(line.size() - 1);
+        }
+        if (lastLine || line.size() == 1) {
+            line[line.size()-1] += std::string(spaceToFill,' ');
+        }
+        else {
+        for (int i = 0; i <= line.size() - 2; i++) {
+            line[i] += std::string(regularSpaces, ' '); // Add regular spaces
+            if (extraSpaces > 0) { // Distribute extra spaces
+                line[i] += " "; // Add one extra space
+                extraSpaces--;
             }
-
         }
+        }
+        return joinLine(line);
 
-        
+
+                      }
+    std::vector<std::string> fullJustify(std::vector<std::string>& words, int maxWidth) {
+        std::vector<std::string> ans;
+        bool lastLine = false;
+        int i = 0;
+        while (i < words.size()) {
+            std::vector<std::string> currentLine = getWords(i, words, maxWidth);
+            i += currentLine.size();
+            bool lastLine = (i >= words.size());
+            ans.push_back(createLine(currentLine, maxWidth, lastLine));
+        }
+        return ans;
     }
 };
+
+int main() {
+    Solution solution;
+    std::vector<std::string> words = {"This", "is", "an", "example", "of", "text", "justification."};
+    int maxWidth = 16;
+    std::vector<std::string> result = solution.fullJustify(words, maxWidth);
+
+    for (const std::string& line : result) {
+        std::cout << "\"" << line << "\"" << std::endl;
+    }
+
+    return 0;
+}
